@@ -1,0 +1,164 @@
+function a_geo = geopotentialAccel_ECEF(r_ECEF, Cbar, Sbar, params)
+% GEOPOTENTIALACCEL_ECEF  Compute gravity acceleration (ECEF) from normalized
+% spherical harmonic coefficients (Schmidt quasi-normalized).
+%
+%   a_geo = geopotentialAccel_ECEF(r_ECEF, Cbar, Sbar, params)
+%
+% INPUTS:
+%   r_ECEF : 3x1 position vector in ECEF (meters)
+%   Cbar,Sbar : coefficient matrices as returned by loadEGMcoeffs ()
+%               (size (0:N,0:N) mapped to MATLAB [1:N+1,1:N+1])
+%   params : struct with fields:
+%       - GM : Earth's GM (m^3/s^2). Default 3.986004418e14 (WGS-84)
+%       - a  : reference radius (m). Default 6378136.3 (WGS-84)
+%       - N  : truncation degree (<= size(Cbar,1)-1). Default min(50,size-1)
+%
+% OUTPUT:
+%   a_geo : 3x1 acceleration vector in ECEF (m/s^2) = - grad U (evaluated at r_ECEF)
+%
+% NOTES:
+% - Uses geocentric latitude phi (z/r) and longitude lambda = atan2(y,x).
+% - Relies on MATLAB's legendre() to compute associated Legendre functions (unnormalized),
+%   then applies Schmidt normalization factors.
+
+% Default params
+if ~isfield(params,'GM'), params.GM = 3.986004418e14; end
+if ~isfield(params,'a'),  params.a  = 6378136.3; end
+if ~isfield(params,'N'),  params.N  = min(50, size(Cbar,1)-1); end
+
+GM = params.GM;
+a = params.a;
+N = params.N;
+
+% position components
+x = r_ECEF(1); y = r_ECEF(2); z = r_ECEF(3);
+r = norm(r_ECEF);
+if r == 0
+    error('Position norm is zero');
+end
+
+% geocentric latitude phi and longitude lambda
+phi = asin(z / r);            % geocentric latitude
+lambda = atan2(y, x);
+sinphi = sin(phi);
+cosphi = cos(phi);
+
+% precompute (a/r)^n
+rhoP = (a / r) .^ (0:(N+2));   % need up to N maybe N+1 for some terms
+
+% Precompute unnormalized associated Legendre Pnm(x) for each n using MATLAB legendre
+% MATLAB's legendre returns P_n^m(x) with m=0..n in row index m+1
+x_arg = sinphi;  % note: legendre uses argument x = cos(theta); here x = sin(phi) is OK
+% We'll store unnormalized Pnm in cell or matrix
+Pnm_unnorm = cell(N+1,1);
+for n = 0:N
+    Pn = legendre(n, x_arg, 'sch'); % MATLAB has option 'sch' for Schmidt?? (MATLAB R2018b+)
+    % NOTE: older MATLAB versions may not support 'sch' flag. If 'sch' not available,
+    %       use legendre(n,x) and apply normalization factors below.
+    % In case 'sch' accepted, Pn is already Schmidt-normalized! We still compute normalization below to be robust.
+    Pnm_unnorm{n+1} = Pn;  % Pn is (n+1)x1
+end
+
+% Determine whether the legendre() call returned normalized values (depends on MATLAB version/flag)
+% We'll compute normalization factor explicitly to be safe and produce Pbar from unnormalized values.
+% Build Pbar matrix and derivative dPbar/dx (w.r.t x=sinphi)
+Pbar = zeros(N+1, N+1);       % indices (n+1,m+1)
+dPbar_dx = zeros(N+1, N+1);
+
+% Precompute factorials for normalization factors
+% Using gamma for stability: factorial(k)=gamma(k+1)
+fact_cache = arrayfun(@(k) gamma(k+1), 0:(2*N));
+
+for n = 0:N
+    Pn = Pnm_unnorm{n+1}; % size n+1
+    for m = 0:n
+        Pnm = Pn(m+1);   % unnormalized associated Legendre P_n^m(x)
+        % Schmidt quasi-normalization factor:
+        if m == 0
+            k = sqrt( (2*n+1) );
+        else
+            k = sqrt( (2*n+1) * 2 * fact_cache(n-m+1) / fact_cache(n+m+1) );
+        end
+        % Pbar:
+        Pbar(n+1,m+1) = k * Pnm;
+        % derivative dPnm/dx:
+        if n == m
+            % analytic derivative for P_m^m: d/dx P_m^m = - m * x /(1-x^2) * P_m^m
+            if abs(1 - x_arg^2) < 1e-15
+                dPnm_dx = 0; % at poles numerical safeguard
+            else
+                dPnm_dx = - m * x_arg / (1 - x_arg^2) * Pnm;
+            end
+        else
+            % use recurrence: dP_n^m/dx = ( n*x*P_n^m - (n+m)*P_{n-1}^m ) / (x^2 - 1)
+            Pn_1 = Pnm_unnorm{n}(m+1); % P_{n-1}^m
+            if abs(x_arg^2 - 1) < 1e-15
+                dPnm_dx = 0; % safeguard
+            else
+                dPnm_dx = ( n * x_arg * Pnm - (n + m) * Pn_1 ) / (x_arg^2 - 1);
+            end
+        end
+        % derivative of normalized Pbar:
+        dPbar_dx(n+1,m+1) = k * dPnm_dx;
+    end
+end
+
+% Now accumulate derivatives of potential components
+dU_dr_term = 0;
+dU_dphi_term = 0;
+dU_dlambda_term = 0;
+
+% we'll loop n=2..N and m=0..n
+for n = 2:N
+    for m = 0:n
+        C = Cbar(n+1,m+1);
+        S = Sbar(n+1,m+1);
+        P = Pbar(n+1,m+1);
+        dP_dx = dPbar_dx(n+1,m+1);
+        cos_mlambda = cos(m * lambda);
+        sin_mlambda = sin(m * lambda);
+        % common factor:
+        factor = rhoP(n+1) * ( C * cos_mlambda + S * sin_mlambda );
+        % radial accumulation
+        dU_dr_term = dU_dr_term + (n + 1) * factor * P;
+        % latitudinal (phi) accumulation: note dP/dphi = dP/dx * dx/dphi ; x = sinphi => dx/dphi = cosphi
+        dU_dphi_term = dU_dphi_term + factor * (dP_dx * cosphi);
+        % longitudinal accumulation: derivative wrt lambda
+        if m == 0
+            % m=0 term contributes zero to lambda derivative
+            dU_dlambda_term = dU_dlambda_term + 0;
+        else
+            dU_dlambda_term = dU_dlambda_term + rhoP(n+1) * P * ( - m * C * sin_mlambda + m * S * cos_mlambda );
+        end
+    end
+end
+
+% compute partial derivatives of U
+dU_dr = -GM / (r^2) * ( 1 + dU_dr_term );   % dU/dr
+dU_dphi = GM / r * dU_dphi_term;            % dU/dphi (phi = geocentric latitude)
+dU_dlambda = GM / r * dU_dlambda_term;      % dU/dlambda
+
+% convert spherical derivatives to cartesian gradient components
+% using relations:
+% x = r cosphi coslambda, y = r cosphi sinlambda, z = r sinphi
+% grad U = e_r * dU_dr + (1/r) e_phi * dU_dphi + (1/(r cosphi)) e_lambda * dU_dlambda
+% components:
+% ax = dU_dr * x/r  + (dU_dphi / r) * (-sinphi coslambda) + (dU_dlambda /(r*cosphi)) * (-sinlambda)
+% ay = dU_dr * y/r  + (dU_dphi / r) * (-sinphi sinlambda) + (dU_dlambda /(r*cosphi)) * ( coslambda)
+% az = dU_dr * z/r  + (dU_dphi / r) * ( cosphi)
+
+% handle near-pole cosphi ~ 0 for lambda term
+if abs(cosphi) < 1e-12
+    lambda_term_factor = 0;
+else
+    lambda_term_factor = 1/(r * cosphi);
+end
+
+ax = dU_dr * (x/r) + (dU_dphi / r) * ( - sinphi * cos(lambda) ) + dU_dlambda * ( - sin(lambda) ) * lambda_term_factor;
+ay = dU_dr * (y/r) + (dU_dphi / r) * ( - sinphi * sin(lambda) ) + dU_dlambda * (   cos(lambda) ) * lambda_term_factor;
+az = dU_dr * (z/r) + (dU_dphi / r) * (   cosphi );
+
+% acceleration is minus gradient
+a_geo = -[ax; ay; az];
+
+end
