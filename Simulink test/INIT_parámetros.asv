@@ -1,8 +1,0 @@
-% parámetros iniciales para iniciar la simulación
-
-clc; clear;
-%% Parámetros del Satélite
-m = % masa del satélite
-I = % matriz de inercia del satélite
-
-%% Parámetros Gravitacionales (no modificar)

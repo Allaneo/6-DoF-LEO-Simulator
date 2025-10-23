@@ -6,7 +6,7 @@ function a_geo = MD_aceleracion_geopotencial(r, lambda, sinphi, cosphi, s, rhoP,
 
 % umbral para evitar divisiones por s cero
 eps_s = 1e-8;
-s_safe = max(s, eps_s); % toma el valor mas grande para evitar tomar s en caso de que sea ceero
+s_safe = max(s, eps_s); % toma el valor mas grande para evitar tomar s en caso de que sea cero
 
 % convenciones
 N = size(Cbar,1)-1;
@@ -15,6 +15,7 @@ N = size(Cbar,1)-1;
 U = zeros(N+1,N+1);
 dUdx = zeros(N+1,N+1);
 
+%% Coeficientes de normalización U y derivadas du/dphi
 % n=0
 U(1,1)=1; dUdx(1,1)=0;
 % n=1
@@ -39,7 +40,7 @@ dU_dr_term = 0;
 dU_dphi_term = 0;
 dU_dlambda_term = 0;
 
-for n = 2:N
+for n = 1:N
     for m = 0:n
         C = Cbar(n+1,m+1); S = Sbar(n+1,m+1);
         Pnm = Pbar(n+1,m+1);

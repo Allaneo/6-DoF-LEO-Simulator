@@ -1,0 +1,20 @@
+function F_I, = MD_drag(v_rel_I, Cd, rho, A_proj)
+% MD_DRAG_APROJ_CLEAN  Calcula fuerza aerodinámica usando Aproj
+% Inputs:
+%  r_I, v_I         : 3x1 ECI [m],[m/s]
+%  q                : 4x1 quaternion scalar-first (inertial->body)
+%  Cd               : coeficiente de arrastre (scalar)
+%  rho              : densidad atmosférica en punto (scalar) [kg/m^3]
+%  A_proj     : 3x1 areas de caras normales a ejes body [Ax;Ay;Az] (m^2)
+% Outputs:
+%  F_B              : 3x1 fuerza drag en BODY [N]
+
+% 1) velocidad relativa en ECI (atmósfera co-rotante)
+v = norm(v_rel_I);
+vhat_I = v_rel_I / v;
+
+% 2) magnitud y vector de la fuerza en ECI
+F_mag = 0.5 * rho * Cd * Aproj * v^2;
+F_I = - F_mag * vhat_I;    % fuerza total en ECI (componentes en ECI)
+
+end

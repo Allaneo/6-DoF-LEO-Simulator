@@ -6,10 +6,13 @@ m = 1000;% masa del satélite
 I = [100 0 0
     0 200 0
     0 0 150];% matriz de inercia del satélite
+A_transversal = [1;0;0];
+CD= 2.2;
+CP = [0,0,0.01]; % posición del centro de presiones respecto del centro de gravedad
 
 %% Condiciones Iniciales
 posicion_inicial = [6988137;0;0]; % metros
-velocidad_inicial = [0;7600;0]    % m/s
+velocidad_inicial = [0;7600;0];    % m/s
 
 CI_lineal = [posicion_inicial;velocidad_inicial];
 CI_angular = [1;0;0;0;0;0;0];
