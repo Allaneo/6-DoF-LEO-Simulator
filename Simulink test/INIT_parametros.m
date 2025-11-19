@@ -34,3 +34,12 @@ K = [1.000000000000000	0	0	0
 2.645751311064591	1.080123449734643	0.341565025531987	0.139443337755679];
 
 GM = 3.986004418e14;
+
+% Parametros gravitacionales modificables
+delta =1; % distancia para calcular la derivada espacial para el momento gravitacional
+
+%% Parámetros para presión solar (no modificar)
+solar_omegas = 282.94; %Omega+omega
+solar_epsilon = 23.43929111;
+solar_cosep = cosd(solar_epsilon);
+solar_sinep = sind(solar_epsilon);
