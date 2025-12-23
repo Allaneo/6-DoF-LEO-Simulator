@@ -1,4 +1,4 @@
-function  r_inertial= MT_BODY2INERTIAL(q,r_inertial)
+function  r_inertial= MT_BODY2ECI(q,r_inertial)
 % Inputs:
 % q: cuaternión [4x1]
 % vector a transformar r_body de [3x1]

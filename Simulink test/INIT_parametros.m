@@ -6,12 +6,13 @@ m = 1000;% masa del satélite
 I = [100 0 0
     0 200 0
     0 0 150];% matriz de inercia del satélite
-A_transversal = [1;0;0];
+A_transversal = [1;0.1;0.1];
 CD= 2.2;
+Cr = 2;
 CP = [0,0,0.01]; % posición del centro de presiones respecto del centro de gravedad
 
 %% Condiciones Iniciales
-posicion_inicial = [6988137;0;0]; % metros
+posicion_inicial = [6988;0;0]*1e3; % metros (en total, km adentro del corchete)
 velocidad_inicial = [0;7600;0];    % m/s
 
 CI_lineal = [posicion_inicial;velocidad_inicial];
@@ -33,10 +34,15 @@ K = [1.000000000000000	0	0	0
 2.236067977499790	1.290994448735806	0.645497224367903	0
 2.645751311064591	1.080123449734643	0.341565025531987	0.139443337755679];
 
+% Cbar = zeros(4);
+% Sbar = zeros(4);
+% K = zeros(4);
+% K(1,1) = 1;
+
 GM = 3.986004418e14;
 
-% Parametros gravitacionales modificables
-delta =1; % distancia para calcular la derivada espacial para el momento gravitacional
+% Parametros gravitacionales "modificables"
+delta =0.1; % distancia para calcular la derivada espacial para el momento gravitacional
 
 %% Parámetros para presión solar (no modificar)
 solar_omegas = 282.94; %Omega+omega

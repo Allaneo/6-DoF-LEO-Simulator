@@ -9,7 +9,7 @@ function Aproj = MT_area_proyectada(v_rel_I, q, A_transversal)
 %   Aproj   : scalar projected area [m^2]
 
 % relative velocity in BODY
-v_rel_B = MT_INERTIAL2BODY(q,v_rel_I);
+v_rel_B = MT_ECI2BODY(q,v_rel_I);
 v_rel = norm(v_rel_B);
 vhat = v_rel_B / v_rel;
 

@@ -1,5 +1,5 @@
 function a_ecef = MD_aceleracion_geopotencial(r, lambda, sinphi, cosphi, s, rhoP, Cbar, Sbar, K, GM, phi)
-% Calcula componentes de aceleración en el sistema geocéntrico (a_r,a_phi,a_lambda).
+% Calcula componentes de aceleración en ECEF
 % Entradas:
 %  r, phi, lambda, sinphi, cosphi, s, rhoP : provenientes del bloque anterior (MT_ECEF2GEOCENTRIC)
 %  Cbar,Sbar,K : matrices (N+1 x N+1) (4x4)

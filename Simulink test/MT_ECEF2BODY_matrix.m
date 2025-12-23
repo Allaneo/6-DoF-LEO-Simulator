@@ -1,6 +1,4 @@
 function Ja_body = MT_ECEF2BODY_matrix(q, era,Ja_ecef)
-
-
     c = cos(era); s = sin(era);
     C_IE = [c, -s, 0;
           s, c, 0; 
