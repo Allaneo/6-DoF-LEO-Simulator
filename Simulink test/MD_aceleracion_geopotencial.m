@@ -32,8 +32,13 @@ U(1,1)=1; dUdx(1,1)=0;
   U(4,4)= -15*s^3;           dUdx(4,4)= 45*sinphi*s;
 
 % aplicar K
-Pbar = K .* U;
-dPbar_dx = K .* dUdx;
+Pbar      = K .* U;
+dPbar_dx  = K .* dUdx;
+
+% --- Fix convención: remover/poner fase Condon-Shortley para alinear con gravitysphericalharmonic
+phase_m   = (-1).^(0:N);                 % 1x(N+1): m=0..N
+Pbar      = bsxfun(@times, Pbar,     phase_m);
+dPbar_dx  = bsxfun(@times, dPbar_dx, phase_m);
 
 % acumuladores
 dU_dr_term = 0;
