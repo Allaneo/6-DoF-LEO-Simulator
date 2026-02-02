@@ -1,0 +1,16 @@
+function r_CP_b = MD_cp_calculator(v_rel_B, w)
+% CP equivalente para paralelepípedo usando 3 familias (±X, ±Y, ±Z)
+% v_rel_B: 3x1 en BODY
+% w      : 3x1 pesos
+% Lx Ly Lz: dimensiones
+
+W = w(1) + w(2) + w(3);
+
+sx = -sign(v_rel_B(1));   % flujo entrante ~ -v_rel_B
+sy = -sign(v_rel_B(2));
+sz = -sign(v_rel_B(3));
+
+r_CP_b = [ (sx*0.3/2)*w(1);
+          (sy*0.2/2)*w(2);
+          (sz*0.1/2)*w(3) ] / W;
+end
