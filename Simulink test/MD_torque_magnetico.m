@@ -1,19 +1,31 @@
 function tau_mag = MD_torque_magnetico(B_body, m_res, m_cmd)
-% MD_torque_magnetico
+%#codegen
 % Torque magnético en BODY: tau = (m_res + m_cmd) x B
-%
-% Entradas:
-%   B_body_T    : [3x1] campo geomagnético en BODY [Tesla]
-%   m_res_body  : [3x1] dipolo residual en BODY [A*m^2]
-%   m_cmd_body  : [3x1] dipolo comandado en BODY [A*m^2]
-%
-% Salidas:
-%   tau_mag : [3x1] torque magnético en BODY [N*m]
+% Entradas aceptadas:
+%   - 3 elementos (cualquier forma) o escalar (se replica).
+% Salida:
+%   - tau_mag [3x1] fijo (codegen-friendly)
 
-B_body = reshape(B_body, 3, 1);
-m_res  = reshape(m_res,  3, 1);
-m_cmd  = reshape(m_cmd,  3, 1);
+B  = to3x1(B_body);
+mr = to3x1(m_res);
+mc = to3x1(m_cmd);
 
-m_tot  = m_res + m_cmd;
-tau_mag = cross(m_tot, B_body);
+tau_mag = cross(mr + mc, B);
+end
+
+function v = to3x1(x)
+%#codegen
+v = zeros(3,1);
+
+% Nota: usar numel() + indexado lineal mantiene salida de tamaño fijo.
+if numel(x) == 3
+    v(1) = x(1);
+    v(2) = x(2);
+    v(3) = x(3);
+elseif numel(x) == 1
+    v(:) = x(1);
+else
+    % Fallo duro: si llega algo distinto, el modelo está mal cableado
+    coder.internal.error('MD_torque_magnetico: input debe tener 1 o 3 elementos.');
+end
 end

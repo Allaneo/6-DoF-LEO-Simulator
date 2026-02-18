@@ -10,7 +10,7 @@ s = sin(era);
 R = [c, s, 0;
      -s,  c, 0;
      0,  0, 1];
-C = C_FIX_val*R;
+C = R*C_FIX_val;
 
 % Para ECI->ECEF usamos la transpuesta
 r_ecef = C * r_eci;
