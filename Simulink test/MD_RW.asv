@@ -1,0 +1,47 @@
+function [Omega_dot, tau_rw] = MD_RW(u_cmd, Omega, Jw, u_peak, Omega_max, P_peak)
+% MD_RW
+% Rueda de inercia ideal 1-eje (torque-comandada) con límites.
+%
+% ENTRADAS:
+%   u_cmd     [N*m]    torque requerido (comando)
+%   Omega     [rad/s]  velocidad actual de la rueda (estado, integrado afuera)
+%   Jw        [kg*m^2] inercia de la rueda
+%   u_peak    [N*m]    límite de torque (pico). Use Inf para desactivar
+%   Omega_max [rad/s]  límite de velocidad. Use Inf para desactivar
+%   P_peak    [W]      límite de potencia mecánica (derating). Use Inf para desactivar
+%
+% SALIDAS:
+%   Omega_dot [rad/s^2] aceleración de la rueda
+%   tau_rw    [N*m]     torque aplicado por la rueda SOBRE EL SATÉLITE (reacción)
+%
+% CONVENCIÓN DE SIGNO:
+%   - El motor aplica +u_act a la rueda.
+%   - La rueda aplica -u_act al satélite: tau_rw = -u_act
+
+% ---- 1) Límite efectivo por potencia (opcional)
+u_lim = u_peak;
+
+if isfinite(P_peak)
+    Omega_eps = 1e-3; % evita singularidad en Omega~0
+    u_lim_power = P_peak / max(abs(Omega), Omega_eps);
+    u_lim = min(u_lim, u_lim_power);
+end
+
+% ---- 2) Saturación por torque
+u_act = max(min(u_cmd, u_lim), -u_lim);
+
+% ---- 3) Saturación por velocidad (no acelerar más allá de Omega_max)
+if isfinite(Omega_max)
+    if (Omega >=  Omega_max) && (u_act > 0)
+        u_act = 0;
+    elseif (Omega <= -Omega_max) && (u_act < 0)
+        u_act = 0;
+    elseif u_act == 0
+    end
+end
+
+% ---- 4) Dinámica ideal + reacción sobre el satélite
+Omega_dot = u_act / Jw;
+tau_rw    = [-u_act;0;0];
+
+end

@@ -36,18 +36,20 @@ l_minimo_drag = 0.05;           % Brazo de palanca mínimo para momento por drag
 % Parámetros de RW
 RW.h_max_Nms      = 0.12;      % [N*m*s]
 RW.OmegaMax_rpm   = 6000;      % [rpm]
-RW.u_peak_Nm      = 0.02;      % [N*m]  torque máximo 
+RW.u_peak_Nm      = 0.02;      % [N*m]  peak torque (e.g., 20 mN*m)
 RW.P_peak_W       = Inf;       % [W] Inf para desactivar limitación por potencia.
 
 RW.OmegaMax_radps = RW.OmegaMax_rpm * 2*pi/60;      % [rad/s]
 RW.Jw_kgm2        = RW.h_max_Nms / RW.OmegaMax_radps;
 
+% 3) Parameters you pass into the MATLAB Function block
 Jw        = RW.Jw_kgm2;
 u_peak    = RW.u_peak_Nm;
 Omega_max = RW.OmegaMax_radps;
 P_peak    = RW.P_peak_W;
 
-Omega0 = 0;   % [rad/s] velocidad inicial de la rueda.
+% Optional: initial wheel speed (state IC)
+Omega0 = 0;   % [rad/s]
 
 %% ============================
 % Tiempo inicial (UTC) + Transformación ECI-ECEF
@@ -128,7 +130,7 @@ posicion_inicial  = [633;-755;7010]*1e3;   % [m] ECI
 velocidad_inicial = [-5749;-4824;0];       % [m/s] ECI
 
 % Actitud inicial: [q0;q1;q2;q3; wx;wy;wz]
-CI_angular = [1;0;0;0; 0;0;0];
+CI_angular = [0;0;0;0; 0;0;0];
 
 % --- Presets ---
 switch ORBIT_CASE
@@ -165,7 +167,7 @@ fprintf('Caso orbital: %s (ORBIT_CASE=%d)\n', case_name, ORBIT_CASE);
 GRAV_MODEL = 3;                                  % 1: N4 / 2: J2 / 3: SIMPLE
 
 % --- Selección (y switch) de Modelo Atmosférico para Drag ---
-ATM_SEL = Simulink.Parameter(int32(2));          % 1: US / 2: EXP / 3: NONE
+ATM_SEL = Simulink.Parameter(int32(3));          % 1: US / 2: EXP / 3: NONE
 ATM_SEL.CoderInfo.StorageClass = 'SimulinkGlobal';
 
 DATA_earth;
