@@ -1,5 +1,27 @@
-Simulink test/Resultados/ECI_700km_CIRC_POLAR.mat
-Simulink test/Resultados/DRAG_ONLY.mat
-Simulink test/Resultados/J2_ONLY.mat
-Simulink test/Resultados/ECI_700km_CIRC_POLAR.mat
-Simulink test/Resultados/EC-CIRC_COMPLETE_CANNONBALL.mat
+# MATLAB editor and autosave files
+*.asv
+*.autosave
+*.m~
+
+# Simulink generated artifacts
+*.slxc
+*.slx.err
+*.slx.original
+slprj/
+**/slprj/
+codegen/
+**/codegen/
+sccprj/
+**/sccprj/
+
+# Generated binaries and logs
+*.mex*
+*.log
+*.tmp
+
+# Simulation outputs
+Simulink test/Resultados/*.mat
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
